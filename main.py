@@ -34,6 +34,7 @@ bptt = 35   # batch seqeunce length
 batch_size = 16
 eval_batch_size = 8
 
+
 # Create torch data objects
 train_txt = get_txt(df_train['full_text'])
 val_txt = get_txt(df_valid['full_test'])
