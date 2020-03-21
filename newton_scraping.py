@@ -8,13 +8,20 @@ Main repository: http://www.newtonproject.ox.ac.uk/texts/newtons-works/all
 @author: hoang
 """
 
-
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import re
 
-def newton_scraping():
-    url = "http://www.newtonproject.ox.ac.uk/texts/newtons-works/all"
+page_list = []
+j = 1
+
+for i in range(0,67):
+    a = "http://www.newtonproject.ox.ac.uk/texts/newtons-works/all?n=25&sr=" + str(j) + "&name=1&tr=1&sort=date&order=asc"
+    page_list.append(a)
+    j += 25
+    
+def newton_scraping(url="http://www.newtonproject.ox.ac.uk/texts/newtons-works/all"):
     r = requests.get(url)
     #print(r.content)
     
@@ -22,9 +29,6 @@ def newton_scraping():
     #print(soup.prettify())
     
     # Article features
-    text_id = []
-    title = []
-    metadata = []
     source = []
     full_text = []
     
@@ -32,33 +36,47 @@ def newton_scraping():
     text_div = soup.findAll("td", {"class": "record"})
     
     for i_text in text_div:
-        text_id.append(i_text.findAll("p", {"class": "metadataContent"})[1].text)
-        title.append(i_text.find("p", {"class": "title"}).text)
-        metadata.append(i_text.find("p", {"class": "metadata"}).text)
-        source.append(i_text.find("a")["href"])
+        hyper = i_text.find_all('a', href = re.compile('norm'))
+        for j in hyper:
+            source.append(j.get('href'))
+            
+    print(len(source))
     
-    print(title)
-    '''
     for i_source in source:
+        print(i_source)
         url_subtext = str("http://www.newtonproject.ox.ac.uk" + i_source)
         try:    
             r = requests.get(url_subtext)
             soup = BeautifulSoup(r.content, "html5lib")
-            for j_soup in soup.findAll("div", {"id": "tei"}):
-                full_text.append(j_soup.get_text(strip=True))
+            paragraphs = soup.find('div', {'id' : 'tei'}).find_all('p')
+            a = " ".join([paragraph.text for paragraph in paragraphs])
+            full_text.append(a)
         except requests.exceptions.ConnectionError:   # Somce links go to another site
             url_subtext = str(i_source)
             r = requests.get(url_subtext)
             soup = BeautifulSoup(r.content, "html5lib")
-            for j_soup in soup.findAll("div", {"id": "tei"}):
-                full_text.append(j_soup.get_text(strip=True))
+            paragraphs = soup.find_all('div')
+            a = " ".join([paragraph.text for paragraph in paragraphs])
+            full_text.append(a)   
+    # Create a dataframe
+    print(len(full_text))
+    page_df = pd.DataFrame({'source' : source,
+                       "full_text" : full_text
+                       })
     
     
-    df = pd.DataFrame(list(zip(text_id, title, metadata, source, full_text)), columns=["id", "title", "metadata", "source", "full_text"])
+    return page_df
+
+def get_newton_text():
+    df = pd.DataFrame()
     
+    for i in page_list:
+        page_df = newton_scraping(url = i)
+        df.append(page_df)
+        
+    df['text_id'] = str(df.source).split("/")[-1]    
     
     return df
-    '''
     
-newton_scraping()
+df = get_newton_text()
 

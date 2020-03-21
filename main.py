@@ -34,7 +34,6 @@ bptt = 35   # batch seqeunce length
 batch_size = 16
 eval_batch_size = 8
 
-
 # Create torch data objects
 train_txt = get_txt(df_train['full_text'])
 val_txt = get_txt(df_valid['full_test'])
@@ -59,7 +58,7 @@ emb_size = 200          # embedding dimensions
 nhid = 200          # dimensions of ff network
 n_layers = 2            # number of encoder layers
 n_head = 2          # number of attention heads
-dropout = 0.4
+dropout = 0.5
 
 model = transformer_model(n_tokens, emb_size, nhid, n_layers, n_head, dropout)
 
